@@ -1,39 +1,56 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tower Defense Game</title>
     <style>
         body { font-family: Arial, sans-serif; }
-        /* Add other styles for your game */
+        canvas { border: 1px solid black; }
     </style>
 </head>
 <body>
     <h1>Tower Defense Game</h1>
-    <div id="game-area">
-        <!-- Game will be rendered here -->
-    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
     <script>
-        // JavaScript game logic here
+        // Game variables
         const maps = [
-            { name: 'Map 1', layout: '...' },
-            { name: 'Map 2', layout: '...' },
-            // Add more maps
-        ];
-        const difficulties = ['Easy', 'Medium', 'Hard'];
-        const troops = [
-            { name: 'Archer', damage: 5, range: 60 },
-            { name: 'Knight', damage: 10, range: 30 },
-            // Add more troop categories
-        ];
-        const waves = [
-            { enemyType: 'Goblin', count: 5 },
-            { enemyType: 'Orc', count: 10 },
-            // Add more waves
+            // Maps with different layouts
+            { name: "Map 1", layout: [] },
+            { name: "Map 2", layout: [] },
+            { name: "Map 3", layout: [] },
+            { name: "Map 4", layout: [] },
+            { name: "Map 5", layout: [] },
+            { name: "Map 6", layout: [] }
         ];
 
-        // Function to start the game
+        const towers = [
+            { type: "Basic Tower", damage: 10, range: 100 },
+            { type: "Sniper Tower", damage: 20, range: 200 },
+            { type: "Splash Tower", damage: 15, range: 150 },
+            { type: "Laser Tower", damage: 25, range: 120 },
+            { type: "Ice Tower", damage: 5, range: 80 },
+            { type: "Fire Tower", damage: 30, range: 180 }
+        ];
+
+        const enemies = [
+            { type: "Goblin", health: 50 },
+            { type: "Orc", health: 80 },
+            { type: "Troll", health: 120 },
+            { type: "Skeleton", health: 60 }
+        ];
+
+        const progression = { level: 1, experience: 0 };  
+        const gameModes = ["Easy", "Medium", "Hard"];
+
+        // Game Functions
         function startGame() {
-            // Initialize game here
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            // Game loop and rendering code goes here
         }
+
+        startGame();
     </script>
 </body>
 </html>
