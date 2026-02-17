@@ -6,51 +6,66 @@
     <title>Tower Defense Game</title>
     <style>
         body { font-family: Arial, sans-serif; }
-        canvas { border: 1px solid black; }
+        canvas { border: 1px solid #000; display: block; margin: 0 auto; }
+        #gameControl { text-align: center; }
     </style>
 </head>
 <body>
     <h1>Tower Defense Game</h1>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="gameControl">
+        <button id="startButton">Start Game</button>
+        <button id="resetButton">Reset Game</button>
+    </div>
     <script>
-        // Game variables
-        const maps = [
-            // Maps with different layouts
-            { name: "Map 1", layout: [] },
-            { name: "Map 2", layout: [] },
-            { name: "Map 3", layout: [] },
-            { name: "Map 4", layout: [] },
-            { name: "Map 5", layout: [] },
-            { name: "Map 6", layout: [] }
-        ];
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-        const towers = [
-            { type: "Basic Tower", damage: 10, range: 100 },
-            { type: "Sniper Tower", damage: 20, range: 200 },
-            { type: "Splash Tower", damage: 15, range: 150 },
-            { type: "Laser Tower", damage: 25, range: 120 },
-            { type: "Ice Tower", damage: 5, range: 80 },
-            { type: "Fire Tower", damage: 30, range: 180 }
-        ];
+        let gameRunning = false;
 
-        const enemies = [
-            { type: "Goblin", health: 50 },
-            { type: "Orc", health: 80 },
-            { type: "Troll", health: 120 },
-            { type: "Skeleton", health: 60 }
-        ];
+        const enemies = []; // Array to hold enemies that will be created
+        const towers = []; // Array to hold towers placed by the player
 
-        const progression = { level: 1, experience: 0 };  
-        const gameModes = ["Easy", "Medium", "Hard"];
-
-        // Game Functions
         function startGame() {
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
-            // Game loop and rendering code goes here
+            gameRunning = true;
+            enemies.length = 0; // Clear any previous enemies
+            towers.length = 0; // Clear any previous towers
+            spawnEnemies();
+            update();
         }
 
-        startGame();
+        function spawnEnemies() {
+            // Spawn logic for enemies
+            setInterval(() => { 
+                enemies.push(new Enemy()); 
+            }, 1000);
+        }
+
+        function Enemy() {
+            this.x = 0;
+            this.y = Math.random() * canvas.height;
+            this.width = 50;
+            this.height = 50;
+            this.speed = 1 + Math.random();
+
+            this.update = function() {
+                this.x += this.speed;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            };
+        }
+
+        function update() {
+            if (!gameRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            enemies.forEach(enemy => enemy.update());
+            requestAnimationFrame(update);
+        }
+
+        document.getElementById('startButton').onclick = startGame;
+        document.getElementById('resetButton').onclick = () => {
+            gameRunning = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        };
     </script>
 </body>
 </html>
