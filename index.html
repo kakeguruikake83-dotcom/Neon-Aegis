@@ -1,71 +1,378 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tower Defense Game</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        canvas { border: 1px solid #000; display: block; margin: 0 auto; }
-        #gameControl { text-align: center; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AEGIS DEFENSE — Tower Defense</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --bg: #0a0c12;
+    --bg2: #0f1220;
+    --bg3: #151a2e;
+    --panel: #0d1025cc;
+    --border: #1e2d50;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --gold: #f59e0b;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --glow: 0 0 20px #00d4ff44;
+    --glow2: 0 0 20px #ff6b3544;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); font-family:'Exo 2',sans-serif; color:var(--text); }
+
+  /* ========== SCREENS ========== */
+  .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
+  .screen.active { display:flex; }
+
+  /* ========== MAIN MENU ========== */
+  #menuScreen { background: radial-gradient(ellipse at 50% 30%, #1a0a3e 0%, #0a0c12 70%); }
+  #menuScreen canvas { position:absolute; inset:0; }
+  .menu-content { position:relative; z-index:10; text-align:center; }
+  .game-logo { font-family:'Orbitron',monospace; font-size:clamp(2rem,8vw,5rem); font-weight:900; letter-spacing:0.05em;
+    background: linear-gradient(135deg, #00d4ff, #7c3aed, #ff6b35);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    text-shadow:none; filter:drop-shadow(0 0 30px #00d4ff66); margin-bottom:0.2em; }
+  .game-sub { font-family:'Orbitron',monospace; font-size:clamp(0.6rem,2vw,1rem); letter-spacing:0.4em; color:var(--accent); opacity:0.8; margin-bottom:3rem; }
+  .menu-btn { display:block; width:260px; padding:0.9rem 2rem; margin:0.6rem auto; font-family:'Orbitron',monospace; font-size:1rem; font-weight:700;
+    background:linear-gradient(135deg, #00d4ff22, #7c3aed22); border:1px solid var(--accent); color:var(--accent);
+    cursor:pointer; clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%);
+    transition:all 0.2s; letter-spacing:0.1em; }
+  .menu-btn:hover { background:linear-gradient(135deg, #00d4ff44, #7c3aed44); box-shadow:var(--glow); transform:scale(1.03); }
+  .menu-btn.primary { background:linear-gradient(135deg, #00d4ff55, #7c3aed55); font-size:1.2rem; padding:1.1rem 2.5rem; }
+
+  /* ========== GAME SCREEN ========== */
+  #gameScreen { flex-direction:row; background:var(--bg); }
+  #gameCanvas { flex:1; min-width:0; cursor:crosshair; touch-action:none; }
+  #sidebar { width:200px; min-width:180px; background:var(--panel); border-left:1px solid var(--border);
+    display:flex; flex-direction:column; gap:4px; padding:6px; overflow-y:auto; backdrop-filter:blur(10px); }
+
+  /* ========== HUD ========== */
+  #hud { position:absolute; top:0; left:0; right:200px; display:flex; align-items:center; gap:8px;
+    padding:6px 10px; background:linear-gradient(180deg,#0a0c12ee,transparent); z-index:20; flex-wrap:wrap; }
+  .hud-stat { display:flex; align-items:center; gap:4px; font-family:'Orbitron',monospace; font-size:0.75rem; font-weight:700; }
+  .hud-stat .icon { font-size:1rem; }
+  .hud-stat .val { color:var(--accent); }
+  .hud-sep { width:1px; height:20px; background:var(--border); }
+  #waveBtn { margin-left:auto; font-family:'Orbitron',monospace; font-size:0.7rem; padding:5px 14px;
+    background:linear-gradient(135deg,#22c55e33,#22c55e11); border:1px solid var(--green); color:var(--green);
+    cursor:pointer; clip-path:polygon(8px 0,100% 0,calc(100%-8px) 100%,0 100%); font-weight:700; transition:all 0.2s; }
+  #waveBtn:hover { background:linear-gradient(135deg,#22c55e55,#22c55e22); box-shadow:0 0 15px #22c55e44; }
+  #waveBtn:disabled { opacity:0.4; cursor:not-allowed; }
+
+  /* ========== SIDEBAR ========== */
+  .sidebar-section { font-family:'Orbitron',monospace; font-size:0.55rem; color:var(--text2); letter-spacing:0.2em; text-transform:uppercase; padding:4px 2px 2px; border-bottom:1px solid var(--border); }
+  .tower-btn { display:grid; grid-template-columns:40px 1fr; gap:4px; padding:5px; background:var(--bg3);
+    border:1px solid var(--border); cursor:pointer; transition:all 0.15s; border-radius:2px; align-items:center; }
+  .tower-btn:hover { border-color:var(--accent); background:#1a2240; }
+  .tower-btn.selected { border-color:var(--accent); background:#0d2040; box-shadow:inset 0 0 10px #00d4ff22; }
+  .tower-btn.locked { opacity:0.4; cursor:not-allowed; }
+  .tower-icon { width:36px; height:36px; border-radius:2px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+  .tower-info { min-width:0; }
+  .tower-name { font-family:'Orbitron',monospace; font-size:0.6rem; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tower-cost { font-size:0.65rem; color:var(--gold); }
+  .tower-desc { font-size:0.5rem; color:var(--text2); margin-top:1px; }
+
+  /* Abilities */
+  .ability-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+  .ability-btn { padding:5px; background:var(--bg3); border:1px solid var(--border); cursor:pointer;
+    transition:all 0.15s; border-radius:2px; text-align:center; position:relative; overflow:hidden; }
+  .ability-btn:hover:not(:disabled) { border-color:var(--accent2); }
+  .ability-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .ability-btn .abi-icon { font-size:1.2rem; display:block; }
+  .ability-btn .abi-name { font-size:0.45rem; font-family:'Orbitron',monospace; color:var(--text2); }
+  .ability-btn .abi-cd { font-size:0.5rem; color:var(--accent2); font-weight:700; }
+  .ability-cd-bar { position:absolute; bottom:0; left:0; height:2px; background:var(--accent2); transition:width 0.1s linear; }
+
+  /* Speed */
+  .speed-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:3px; }
+  .speed-btn { padding:4px; background:var(--bg3); border:1px solid var(--border); cursor:pointer;
+    font-family:'Orbitron',monospace; font-size:0.55rem; color:var(--text2); transition:all 0.15s; border-radius:2px; text-align:center; }
+  .speed-btn.active { border-color:var(--accent); color:var(--accent); background:#0d2040; }
+
+  /* Info panel */
+  #infoPanel { background:var(--bg3); border:1px solid var(--border); border-radius:2px; padding:6px; font-size:0.55rem; color:var(--text2); min-height:80px; }
+  #infoPanel h4 { font-family:'Orbitron',monospace; font-size:0.65rem; color:var(--accent); margin-bottom:4px; }
+  #infoPanel .stat-row { display:flex; justify-content:space-between; padding:1px 0; }
+  #infoPanel .stat-row span:last-child { color:var(--text); font-weight:600; }
+  .upgrade-btn { width:100%; margin-top:4px; padding:4px; background:linear-gradient(135deg,#f59e0b22,#f59e0b11);
+    border:1px solid var(--gold); color:var(--gold); cursor:pointer; font-family:'Orbitron',monospace; font-size:0.55rem;
+    transition:all 0.15s; border-radius:2px; }
+  .upgrade-btn:hover { background:linear-gradient(135deg,#f59e0b44,#f59e0b22); }
+  .sell-btn { width:100%; margin-top:3px; padding:3px; background:#ef444411; border:1px solid #ef4444;
+    color:#ef4444; cursor:pointer; font-family:'Orbitron',monospace; font-size:0.5rem; transition:all 0.15s; border-radius:2px; }
+  .sell-btn:hover { background:#ef444422; }
+
+  /* ========== MODALS ========== */
+  .modal-overlay { position:fixed; inset:0; background:#000000cc; z-index:100; display:none; align-items:center; justify-content:center; }
+  .modal-overlay.active { display:flex; }
+  .modal { background:var(--bg2); border:1px solid var(--border); padding:24px; max-width:500px; width:90%;
+    clip-path:polygon(16px 0,100% 0,100% calc(100%-16px),calc(100%-16px) 100%,0 100%,0 16px); }
+  .modal h2 { font-family:'Orbitron',monospace; font-size:1.2rem; color:var(--accent); margin-bottom:16px; }
+  .modal p { color:var(--text2); line-height:1.6; margin-bottom:12px; font-size:0.9rem; }
+  .modal-btns { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+  .modal-btn { padding:8px 20px; font-family:'Orbitron',monospace; font-size:0.8rem; cursor:pointer;
+    clip-path:polygon(8px 0,100% 0,calc(100%-8px) 100%,0 100%); transition:all 0.2s; border:1px solid; font-weight:700; }
+  .modal-btn.confirm { border-color:var(--green); color:var(--green); background:#22c55e11; }
+  .modal-btn.confirm:hover { background:#22c55e33; }
+  .modal-btn.cancel { border-color:var(--text2); color:var(--text2); background:transparent; }
+  .modal-btn.cancel:hover { background:#ffffff11; }
+
+  /* ========== DAMAGE NUMBERS ========== */
+  .dmg-num { position:absolute; font-family:'Orbitron',monospace; font-weight:900; pointer-events:none;
+    animation:floatUp 1s ease-out forwards; z-index:50; text-shadow:0 0 10px currentColor; }
+  @keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-50px) scale(0.7)} }
+
+  /* ========== NOTIFICATIONS ========== */
+  #notifArea { position:absolute; top:50px; left:50%; transform:translateX(-50%); z-index:60; pointer-events:none; display:flex; flex-direction:column; gap:4px; align-items:center; }
+  .notif { font-family:'Orbitron',monospace; font-size:0.75rem; padding:6px 16px; background:var(--panel);
+    border:1px solid var(--accent); color:var(--accent); animation:notifAnim 2.5s ease-out forwards;
+    clip-path:polygon(8px 0,100% 0,calc(100%-8px) 100%,0 100%); }
+  @keyframes notifAnim { 0%{opacity:0;transform:translateY(-10px)} 15%{opacity:1;transform:translateY(0)} 70%{opacity:1} 100%{opacity:0;transform:translateY(-20px)} }
+
+  /* ========== WAVE ANNOUNCE ========== */
+  #waveAnnounce { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:70; pointer-events:none; text-align:center; display:none; }
+  #waveAnnounce h2 { font-family:'Orbitron',monospace; font-size:clamp(1.5rem,5vw,3rem); font-weight:900; color:var(--accent2); filter:drop-shadow(0 0 20px var(--accent2)); animation:waveAnnouncePop 0.5s ease-out; }
+  @keyframes waveAnnouncePop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+
+  /* ========== GAME OVER ========== */
+  #gameOverScreen { background:radial-gradient(ellipse at 50% 50%, #3b0000 0%, #0a0c12 70%); }
+  #gameOverScreen h2 { font-family:'Orbitron',monospace; font-size:clamp(2rem,8vw,4rem); font-weight:900; color:var(--red); filter:drop-shadow(0 0 30px var(--red)); margin-bottom:1rem; }
+  #gameOverScreen .stats { font-size:1rem; color:var(--text2); margin-bottom:2rem; line-height:2; text-align:center; }
+  #gameOverScreen .stats span { color:var(--accent); font-weight:700; }
+
+  /* ========== VICTORY ========== */
+  #victoryScreen { background:radial-gradient(ellipse at 50% 50%, #0a3b1a 0%, #0a0c12 70%); }
+  #victoryScreen h2 { font-family:'Orbitron',monospace; font-size:clamp(2rem,8vw,4rem); font-weight:900; color:var(--green); filter:drop-shadow(0 0 30px var(--green)); margin-bottom:1rem; }
+
+  /* ========== SCROLLBAR ========== */
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  /* ========== MOBILE ========== */
+  @media(max-width:600px) {
+    #sidebar { width:160px; min-width:140px; }
+    #hud { right:160px; font-size:0.65rem; }
+    .tower-icon { width:28px; height:28px; font-size:1rem; }
+  }
+</style>
 </head>
 <body>
-    <h1>Tower Defense Game</h1>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="gameControl">
-        <button id="startButton">Start Game</button>
-        <button id="resetButton">Reset Game</button>
+
+<!-- MENU -->
+<div id="menuScreen" class="screen active">
+  <canvas id="menuCanvas"></canvas>
+  <div class="menu-content">
+    <div class="game-logo">AEGIS</div>
+    <div class="game-sub">DEFENSE PROTOCOL</div>
+    <button class="menu-btn primary" onclick="startGame()">▶ INICIAR MISSÃO</button>
+    <button class="menu-btn" onclick="showHelp()">📖 COMO JOGAR</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="screen">
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-stat"><span class="icon">❤️</span><span id="livesVal" class="val">20</span></div>
+    <div class="hud-sep"></div>
+    <div class="hud-stat"><span class="icon">💰</span><span id="goldVal" class="val">200</span></div>
+    <div class="hud-sep"></div>
+    <div class="hud-stat"><span class="icon">⚔️</span><span id="killsVal" class="val">0</span></div>
+    <div class="hud-sep"></div>
+    <div class="hud-stat"><span class="icon">🌊</span><span id="waveVal" class="val">0</span></div>
+    <div class="hud-sep"></div>
+    <div class="hud-stat"><span class="icon">📊</span><span id="scoreVal" class="val">0</span></div>
+    <button id="waveBtn" onclick="startWave()">PRÓXIMA ONDA ▶</button>
+  </div>
+
+  <!-- CANVAS -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-section">Torres</div>
+    <div id="towerList"></div>
+    <div class="sidebar-section" style="margin-top:6px">Habilidades</div>
+    <div class="ability-grid" id="abilityGrid"></div>
+    <div class="sidebar-section" style="margin-top:6px">Velocidade</div>
+    <div class="speed-grid">
+      <button class="speed-btn active" onclick="setSpeed(1)" id="sp1">1x</button>
+      <button class="speed-btn" onclick="setSpeed(2)" id="sp2">2x</button>
+      <button class="speed-btn" onclick="setSpeed(3)" id="sp3">3x</button>
     </div>
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+    <div class="sidebar-section" style="margin-top:6px">Info</div>
+    <div id="infoPanel"><span style="color:var(--text2);font-size:0.55rem">Selecione uma torre para construir ou clique em uma torre existente.</span></div>
+    <button class="menu-btn" style="width:100%;margin-top:8px;font-size:0.6rem;padding:6px" onclick="confirmMenu()">⬅ MENU</button>
+  </div>
 
-        let gameRunning = false;
+  <!-- DAMAGE NUMBERS LAYER -->
+  <div id="dmgLayer" style="position:absolute;inset:0;pointer-events:none;z-index:30;overflow:hidden"></div>
 
-        const enemies = []; // Array to hold enemies that will be created
-        const towers = []; // Array to hold towers placed by the player
+  <!-- NOTIFICATIONS -->
+  <div id="notifArea"></div>
 
-        function startGame() {
-            gameRunning = true;
-            enemies.length = 0; // Clear any previous enemies
-            towers.length = 0; // Clear any previous towers
-            spawnEnemies();
-            update();
-        }
+  <!-- WAVE ANNOUNCE -->
+  <div id="waveAnnounce"><h2 id="waveAnnounceTxt"></h2></div>
+</div>
 
-        function spawnEnemies() {
-            // Spawn logic for enemies
-            setInterval(() => { 
-                enemies.push(new Enemy()); 
-            }, 1000);
-        }
+<!-- GAME OVER -->
+<div id="gameOverScreen" class="screen">
+  <h2>MISSÃO FALHOU</h2>
+  <div class="stats" id="goStats"></div>
+  <button class="menu-btn primary" onclick="startGame()">↺ TENTAR NOVAMENTE</button>
+  <button class="menu-btn" onclick="goMenu()" style="margin-top:4px">⬅ MENU</button>
+</div>
 
-        function Enemy() {
-            this.x = 0;
-            this.y = Math.random() * canvas.height;
-            this.width = 50;
-            this.height = 50;
-            this.speed = 1 + Math.random();
+<!-- VICTORY -->
+<div id="victoryScreen" class="screen">
+  <h2>VITÓRIA!</h2>
+  <div class="stats" id="vicStats"></div>
+  <button class="menu-btn primary" onclick="startGame()">▶ PRÓXIMA PARTIDA</button>
+  <button class="menu-btn" onclick="goMenu()" style="margin-top:4px">⬅ MENU</button>
+</div>
 
-            this.update = function() {
-                this.x += this.speed;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-            };
-        }
+<!-- HELP MODAL -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal">
+    <h2>COMO JOGAR</h2>
+    <p>🖱 <b>Construir:</b> Selecione uma torre no painel lateral, depois clique em um espaço livre no mapa (não sobre o caminho).</p>
+    <p>🔧 <b>Upgrade:</b> Clique em uma torre construída para ver detalhes e melhorá-la.</p>
+    <p>⚡ <b>Habilidades:</b> Use as habilidades ativas para situações críticas — cada uma tem cooldown.</p>
+    <p>🌊 <b>Ondas:</b> Clique em "PRÓXIMA ONDA" para iniciar. Ondas iniciam automaticamente após 30s.</p>
+    <p>💡 <b>Combos:</b> Congelante + Canhão causa dano CRÍTICO em inimigos lentos!</p>
+    <div class="modal-btns"><button class="modal-btn confirm" onclick="document.getElementById('helpModal').classList.remove('active')">ENTENDIDO</button></div>
+  </div>
+</div>
 
-        function update() {
-            if (!gameRunning) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            enemies.forEach(enemy => enemy.update());
-            requestAnimationFrame(update);
-        }
+<!-- CONFIRM MENU MODAL -->
+<div class="modal-overlay" id="confirmMenuModal">
+  <div class="modal">
+    <h2>SAIR DA MISSÃO?</h2>
+    <p>Todo progresso desta partida será perdido.</p>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="document.getElementById('confirmMenuModal').classList.remove('active')">CANCELAR</button>
+      <button class="modal-btn confirm" onclick="goMenu()">CONFIRMAR</button>
+    </div>
+  </div>
+</div>
 
-        document.getElementById('startButton').onclick = startGame;
-        document.getElementById('resetButton').onclick = () => {
-            gameRunning = false;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        };
-    </script>
-</body>
-</html>
+<script>
+// ============================================================
+// AEGIS DEFENSE — Complete Tower Defense Game
+// ============================================================
+
+const C = document.getElementById('gameCanvas');
+const ctx = C.getContext('2d');
+
+// ==================== CONSTANTS ====================
+const TILE = 48;
+let COLS, ROWS;
+let gameState = null;
+let animFrame = null;
+let lastTime = 0;
+let gameSpeed = 1;
+let selectedTower = null;
+let selectedBuiltTower = null;
+let hoverCell = null;
+let shakeTimer = 0;
+let shakeAmt = 0;
+
+// ==================== TOWER DEFINITIONS ====================
+const TOWER_DEFS = [
+  {
+    id:'archer', name:'Arqueira', icon:'🏹', color:'#22c55e',
+    cost:80, dmg:18, range:3.2, spd:1.8, type:'physical',
+    desc:'Rápida, boa vs normais',
+    upgrades:[
+      {name:'Aljava Maior',cost:60,dmg:8,desc:'+dano'},
+      {name:'Flecha Dupla',cost:100,spd:0.5,desc:'+velocidade'},
+      {name:'Flecha de Fogo',cost:150,bonus:'burn',desc:'Queima inimigos'}
+    ]
+  },
+  {
+    id:'cannon', name:'Canhão', icon:'💣', color:'#f59e0b',
+    cost:150, dmg:60, range:2.8, spd:0.7, type:'explosive', aoe:1.2,
+    desc:'AOE devastador',
+    upgrades:[
+      {name:'Pólvora Extra',cost:80,dmg:25,desc:'+dano'},
+      {name:'Alcance+',cost:120,range:0.5,desc:'+alcance'},
+      {name:'Granada Dupla',cost:200,bonus:'double',desc:'2 projéteis'}
+    ]
+  },
+  {
+    id:'mage', name:'Mago', icon:'🔮', color:'#7c3aed',
+    cost:200, dmg:40, range:3.0, spd:1.0, type:'magic',
+    desc:'Dano mágico, ignora armadura',
+    upgrades:[
+      {name:'Tomo Arcano',cost:100,dmg:20,desc:'+dano mágico'},
+      {name:'Mente Aguçada',cost:150,spd:0.4,desc:'+velocidade'},
+      {name:'Bola de Fogo',cost:250,bonus:'fireball',desc:'Projétil explosivo'}
+    ]
+  },
+  {
+    id:'sniper', name:'Sniper', icon:'🎯', color:'#00d4ff',
+    cost:250, dmg:120, range:6.0, spd:0.4, type:'physical',
+    desc:'Longo alcance, alto dano',
+    upgrades:[
+      {name:'Mira Laser',cost:120,dmg:50,desc:'+dano crítico'},
+      {name:'Silenciador',cost:100,spd:0.2,desc:'+silencioso'},
+      {name:'Perfurar',cost:200,bonus:'pierce',desc:'Atravessa inimigos'}
+    ]
+  },
+  {
+    id:'frost', name:'Gelo', icon:'❄️', color:'#93c5fd',
+    cost:180, dmg:15, range:2.5, spd:1.2, type:'ice', slow:0.5,
+    desc:'Congela e desacelera',
+    upgrades:[
+      {name:'Névoa Gelada',cost:80,range:0.5,desc:'+alcance'},
+      {name:'Gelo Eterno',cost:130,slow:0.2,desc:'+lentidão'},
+      {name:'Blizzard',cost:220,bonus:'blizzard',desc:'AOE de gelo'}
+    ]
+  },
+  {
+    id:'poison', name:'Veneno', icon:'☠️', color:'#86efac',
+    cost:160, dmg:8, range:2.8, spd:1.5, type:'poison', dot:12,
+    desc:'Dano contínuo por veneno',
+    upgrades:[
+      {name:'Toxina+',cost:70,dot:6,desc:'+dano/s'},
+      {name:'Nuvem Tóxica',cost:120,bonus:'cloud',desc:'AOE veneno'},
+      {name:'Veneno Letal',cost:180,dmg:15,desc:'+dano base'}
+    ]
+  },
+  {
+    id:'tesla', name:'Tesla', icon:'⚡', color:'#fbbf24',
+    cost:300, dmg:35, range:2.5, spd:1.8, type:'electric', chain:3,
+    desc:'Corrente elétrica encadeada',
+    upgrades:[
+      {name:'Sobrecarga',cost:150,dmg:20,desc:'+dano'},
+      {name:'Cadeia+',cost:180,chain:2,desc:'+alvos em cadeia'},
+      {name:'Tempestade',cost:250,bonus:'storm',desc:'AOE elétrica'}
+    ]
+  },
+  {
+    id:'antiair', name:'AA', icon:'🚀', color:'#f87171',
+    cost:220, dmg:50, range:4.0, spd:2.5, type:'ballistic', priority:'air',
+    desc:'Anti-aéreo, 3x vs voadores',
+    upgrades:[
+      {name:'Míssil Guiado',cost:100,dmg:30,desc:'+dano'},
+      {name:'Radar',cost:120,range:1.0,desc:'+alcance'},
+      {name:'Salva',cost:200,bonus:'salvo',desc:'3 mísseis simultâneos'}
+    ]
+  }
+];
+
+// ==================== ABILITY DEFINITIONS ====================
+const ABILITY_DEFS = [
+  {id:'meteor',name:'Meteoro',icon:'☄️',cooldown:30,color:'#ef4444',desc:'Dano massivo em área'},
+  {id:'freeze',name:'Congelar',icon:'🌨️',cooldown:25,color:'#93c5fd',desc:'Congela todos por 3s'},
+  {id:'reinforce',name:'Reforçar',icon:'🛡️',cooldown:20
